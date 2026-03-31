@@ -11,7 +11,7 @@ Initial target product: `SWOT_L2_HR_Raster_100m_D`.
 ## Completion Status
 
 - `earthaccess` downloader: **reference-ready** for search + download + local processing.
-- `podaac` downloader: **scaffolded** (adapter, config, capabilities, TODO).
+- `podaac` downloader: **enhanced scaffold** (CLI + subscriber hooks + validation + file wait/match logic).
 - `harmony/swodlr` downloader: **scaffolded** (adapter, config, capabilities, TODO).
 - Earth Engine publish path: preserved and optional.
 
@@ -129,6 +129,45 @@ swot-pipeline download configs/smoke_earthaccess_small_aoi.yaml --download-mode 
 swot-pipeline process configs/smoke_earthaccess_small_aoi.yaml
 swot-pipeline run-job-from-config configs/smoke_earthaccess_small_aoi.yaml --download-mode earthaccess
 ```
+
+## PO.DAAC Mode (What You Must Add)
+
+PO.DAAC can now run with downloader CLI and optional subscriber pre-run, but it requires local tools/config.
+
+Minimum required setup:
+- Earthdata credentials (`.netrc` or `EARTHDATA_USERNAME`/`EARTHDATA_PASSWORD`).
+- PO.DAAC downloader CLI installed and on PATH:
+  - command name defaults to `podaac-data-downloader`.
+- If enabling subscriber mode, subscriber CLI installed and on PATH:
+  - command name defaults to `podaac-data-subscriber`.
+
+Quick checks:
+
+```bash
+which podaac-data-downloader
+which podaac-data-subscriber
+```
+
+PO.DAAC smoke config template:
+- [configs/smoke_podaac_small_aoi.yaml](configs/smoke_podaac_small_aoi.yaml)
+
+Recommended first PO.DAAC run (downloader CLI only):
+
+```bash
+swot-pipeline search configs/smoke_podaac_small_aoi.yaml --download-mode podaac
+swot-pipeline download configs/smoke_podaac_small_aoi.yaml --download-mode podaac
+swot-pipeline process configs/smoke_podaac_small_aoi.yaml
+```
+
+Important PO.DAAC options in `data_access.downloader_options`:
+- `use_downloader_cli`: use PO.DAAC downloader command for retrieval.
+- `use_subscriber`: run subscriber command before download/wait phase.
+- `downloader_cli_extra_args`: extra CLI args (string or list).
+- `subscriber_cli_extra_args`: extra subscriber args (string or list).
+- `downloader_timeout_s`: optional downloader timeout.
+- `subscriber_timeout_s`: subscriber command runtime timeout.
+- `subscriber_wait_timeout_s`: subscriber-only max wait for new files.
+- `subscriber_poll_interval_s`: poll interval while waiting for new files.
 
 ## UI Smoke Test (earthaccess Reference Path)
 

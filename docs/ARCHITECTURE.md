@@ -82,5 +82,5 @@ This document locks the current module boundaries for the first end-to-end refer
 ## Vertical Slice Status
 
 - `earthaccess`: reference-ready end-to-end path.
-- `podaac`: scaffolded adapter with config + capabilities + TODO notes.
+- `podaac`: enhanced scaffold (CLI + subscriber hooks, stronger validation, configurable wait/poll behavior).
 - `harmony/swodlr`: scaffolded adapter with config + capabilities + TODO notes.

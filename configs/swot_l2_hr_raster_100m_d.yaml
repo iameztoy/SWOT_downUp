@@ -31,6 +31,13 @@ data_access:
   downloader_options:
     use_downloader_cli: false
     use_subscriber: false
+    # Optional CLI arg strings/lists for PO.DAAC integration:
+    downloader_cli_extra_args: ""
+    subscriber_cli_extra_args: ""
+    downloader_timeout_s: null
+    subscriber_timeout_s: 90
+    subscriber_wait_timeout_s: 300
+    subscriber_poll_interval_s: 10
     swodlr_cmd_template: null
     output_format: "GeoTIFF"
     reprojection: "EPSG:4326"

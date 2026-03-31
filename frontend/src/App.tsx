@@ -85,6 +85,15 @@ export default function App() {
 
   const [swodlrCmdTemplate, setSwodlrCmdTemplate] = useState('')
   const [usePodaacCli, setUsePodaacCli] = useState(false)
+  const [usePodaacSubscriber, setUsePodaacSubscriber] = useState(false)
+  const [podaacDownloaderCmd, setPodaacDownloaderCmd] = useState('podaac-data-downloader')
+  const [podaacSubscriberCmd, setPodaacSubscriberCmd] = useState('podaac-data-subscriber')
+  const [podaacCliExtraArgs, setPodaacCliExtraArgs] = useState('')
+  const [podaacSubscriberExtraArgs, setPodaacSubscriberExtraArgs] = useState('')
+  const [podaacDownloaderTimeoutS, setPodaacDownloaderTimeoutS] = useState('')
+  const [podaacSubscriberTimeoutS, setPodaacSubscriberTimeoutS] = useState('90')
+  const [podaacSubscriberWaitTimeoutS, setPodaacSubscriberWaitTimeoutS] = useState('300')
+  const [podaacSubscriberPollIntervalS, setPodaacSubscriberPollIntervalS] = useState('10')
 
   const [aoiSummary, setAoiSummary] = useState<AOIValidationResponse | null>(null)
   const [previewYaml, setPreviewYaml] = useState('')
@@ -245,9 +254,18 @@ export default function App() {
         output_dir: 'data/raw',
         page_size: 200,
         max_results: 2000,
+        podaac_downloader_cmd: podaacDownloaderCmd || 'podaac-data-downloader',
+        podaac_subscriber_cmd: podaacSubscriberCmd || 'podaac-data-subscriber',
         downloader_options: {
           swodlr_cmd_template: swodlrCmdTemplate || undefined,
           use_downloader_cli: usePodaacCli,
+          use_subscriber: usePodaacSubscriber,
+          downloader_cli_extra_args: podaacCliExtraArgs || undefined,
+          subscriber_cli_extra_args: podaacSubscriberExtraArgs || undefined,
+          downloader_timeout_s: podaacDownloaderTimeoutS ? Number(podaacDownloaderTimeoutS) : undefined,
+          subscriber_timeout_s: podaacSubscriberTimeoutS ? Number(podaacSubscriberTimeoutS) : undefined,
+          subscriber_wait_timeout_s: podaacSubscriberWaitTimeoutS ? Number(podaacSubscriberWaitTimeoutS) : undefined,
+          subscriber_poll_interval_s: podaacSubscriberPollIntervalS ? Number(podaacSubscriberPollIntervalS) : undefined,
         },
       },
       process: {
@@ -402,6 +420,32 @@ export default function App() {
     if (parsed.process?.workflow_step) setWorkflowStep(parsed.process.workflow_step)
     if (parsed.process?.output_mode) setOutputMode(parsed.process.output_mode)
     if (parsed.publish?.enabled !== undefined) setPublishEnabled(Boolean(parsed.publish.enabled))
+    if (parsed.data_access?.podaac_downloader_cmd) setPodaacDownloaderCmd(parsed.data_access.podaac_downloader_cmd)
+    if (parsed.data_access?.podaac_subscriber_cmd) setPodaacSubscriberCmd(parsed.data_access.podaac_subscriber_cmd)
+    if (parsed.data_access?.downloader_options?.use_downloader_cli !== undefined) {
+      setUsePodaacCli(Boolean(parsed.data_access.downloader_options.use_downloader_cli))
+    }
+    if (parsed.data_access?.downloader_options?.use_subscriber !== undefined) {
+      setUsePodaacSubscriber(Boolean(parsed.data_access.downloader_options.use_subscriber))
+    }
+    if (parsed.data_access?.downloader_options?.downloader_cli_extra_args !== undefined) {
+      setPodaacCliExtraArgs(String(parsed.data_access.downloader_options.downloader_cli_extra_args ?? ''))
+    }
+    if (parsed.data_access?.downloader_options?.subscriber_cli_extra_args !== undefined) {
+      setPodaacSubscriberExtraArgs(String(parsed.data_access.downloader_options.subscriber_cli_extra_args ?? ''))
+    }
+    if (parsed.data_access?.downloader_options?.downloader_timeout_s !== undefined) {
+      setPodaacDownloaderTimeoutS(String(parsed.data_access.downloader_options.downloader_timeout_s ?? ''))
+    }
+    if (parsed.data_access?.downloader_options?.subscriber_timeout_s !== undefined) {
+      setPodaacSubscriberTimeoutS(String(parsed.data_access.downloader_options.subscriber_timeout_s ?? ''))
+    }
+    if (parsed.data_access?.downloader_options?.subscriber_wait_timeout_s !== undefined) {
+      setPodaacSubscriberWaitTimeoutS(String(parsed.data_access.downloader_options.subscriber_wait_timeout_s ?? ''))
+    }
+    if (parsed.data_access?.downloader_options?.subscriber_poll_interval_s !== undefined) {
+      setPodaacSubscriberPollIntervalS(String(parsed.data_access.downloader_options.subscriber_poll_interval_s ?? ''))
+    }
   }
 
   function onDownloadConfigYaml(): void {
@@ -713,10 +757,74 @@ export default function App() {
             </div>
 
             {selectedDownloader === 'podaac' && (
-              <label className="checkbox-row">
-                <input type="checkbox" checked={usePodaacCli} onChange={(e) => setUsePodaacCli(e.target.checked)} />
-                Use PO.DAAC downloader CLI integration
-              </label>
+              <>
+                <div className="alert warning">
+                  PO.DAAC mode requires PO.DAAC CLI tools available on your machine and Earthdata credentials.
+                </div>
+                <div className="grid-2">
+                  <label>
+                    Downloader command
+                    <input value={podaacDownloaderCmd} onChange={(e) => setPodaacDownloaderCmd(e.target.value)} />
+                  </label>
+                  <label>
+                    Subscriber command
+                    <input value={podaacSubscriberCmd} onChange={(e) => setPodaacSubscriberCmd(e.target.value)} />
+                  </label>
+                  <label className="checkbox-row">
+                    <input type="checkbox" checked={usePodaacCli} onChange={(e) => setUsePodaacCli(e.target.checked)} />
+                    Use PO.DAAC downloader CLI
+                  </label>
+                  <label className="checkbox-row">
+                    <input type="checkbox" checked={usePodaacSubscriber} onChange={(e) => setUsePodaacSubscriber(e.target.checked)} />
+                    Run PO.DAAC subscriber before download
+                  </label>
+                  <label>
+                    Downloader extra args
+                    <input
+                      value={podaacCliExtraArgs}
+                      onChange={(e) => setPodaacCliExtraArgs(e.target.value)}
+                      placeholder='example: --file-format .nc --verbose'
+                    />
+                  </label>
+                  <label>
+                    Subscriber extra args
+                    <input
+                      value={podaacSubscriberExtraArgs}
+                      onChange={(e) => setPodaacSubscriberExtraArgs(e.target.value)}
+                      placeholder='example: --verbose'
+                    />
+                  </label>
+                  <label>
+                    Downloader timeout (s, optional)
+                    <input
+                      value={podaacDownloaderTimeoutS}
+                      onChange={(e) => setPodaacDownloaderTimeoutS(e.target.value)}
+                      placeholder="empty = no timeout"
+                    />
+                  </label>
+                  <label>
+                    Subscriber run timeout (s)
+                    <input
+                      value={podaacSubscriberTimeoutS}
+                      onChange={(e) => setPodaacSubscriberTimeoutS(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Subscriber wait timeout for new files (s)
+                    <input
+                      value={podaacSubscriberWaitTimeoutS}
+                      onChange={(e) => setPodaacSubscriberWaitTimeoutS(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Subscriber poll interval (s)
+                    <input
+                      value={podaacSubscriberPollIntervalS}
+                      onChange={(e) => setPodaacSubscriberPollIntervalS(e.target.value)}
+                    />
+                  </label>
+                </div>
+              </>
             )}
 
             {selectedDownloader === 'harmony' && (

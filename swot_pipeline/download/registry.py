@@ -59,6 +59,12 @@ def list_downloaders() -> list[dict[str, Any]]:
                         "podaac_subscriber_cmd",
                         "downloader_options.use_downloader_cli",
                         "downloader_options.use_subscriber",
+                        "downloader_options.downloader_cli_extra_args",
+                        "downloader_options.subscriber_cli_extra_args",
+                        "downloader_options.downloader_timeout_s",
+                        "downloader_options.subscriber_timeout_s",
+                        "downloader_options.subscriber_wait_timeout_s",
+                        "downloader_options.subscriber_poll_interval_s",
                     ],
                     "harmony": [
                         "downloader_options.swodlr_cmd_template",

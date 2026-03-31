@@ -3,6 +3,7 @@ from __future__ import annotations
 import subprocess
 from datetime import datetime
 from pathlib import Path
+from typing import Sequence
 
 from swot_pipeline.adapters.base import DataAdapter
 from swot_pipeline.adapters.cmr import cmr_search
@@ -40,6 +41,24 @@ class PODAACAdapter(DataAdapter):
         return granules
 
     def run_downloader_cli(self, date_start: datetime, date_end: datetime, aoi: AOIConfig, output_dir: Path) -> None:
+        self.run_downloader_cli_with_options(
+            date_start=date_start,
+            date_end=date_end,
+            aoi=aoi,
+            output_dir=output_dir,
+            extra_args=[],
+            timeout_s=None,
+        )
+
+    def run_downloader_cli_with_options(
+        self,
+        date_start: datetime,
+        date_end: datetime,
+        aoi: AOIConfig,
+        output_dir: Path,
+        extra_args: Sequence[str] | None = None,
+        timeout_s: int | None = None,
+    ) -> None:
         output_dir.mkdir(parents=True, exist_ok=True)
         cmd = [
             self.config.podaac_downloader_cmd,
@@ -54,12 +73,28 @@ class PODAACAdapter(DataAdapter):
         ]
         if aoi.bbox:
             cmd.extend(["--bbox", ",".join(str(v) for v in aoi.bbox)])
-        subprocess.run(cmd, check=True)
+        if extra_args:
+            cmd.extend(extra_args)
+        subprocess.run(cmd, check=True, timeout=timeout_s)
 
     def run_subscriber_cli(self) -> None:
+        self.run_subscriber_cli_with_options(extra_args=[], timeout_s=None, timeout_is_ok=False)
+
+    def run_subscriber_cli_with_options(
+        self,
+        extra_args: Sequence[str] | None = None,
+        timeout_s: int | None = None,
+        timeout_is_ok: bool = True,
+    ) -> None:
         cmd = [
             self.config.podaac_subscriber_cmd,
             "-c",
             self.config.short_name,
         ]
-        subprocess.run(cmd, check=True)
+        if extra_args:
+            cmd.extend(extra_args)
+        try:
+            subprocess.run(cmd, check=True, timeout=timeout_s)
+        except subprocess.TimeoutExpired:
+            if not timeout_is_ok:
+                raise
