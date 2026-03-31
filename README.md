@@ -1,5 +1,7 @@
 # SWOT DownUp (Controlled Vertical Slice)
 
+Branch Author: `iameztoy`
+
 This repository now implements a **stabilized first vertical slice**:
 - architecture preserved and documented,
 - one fully usable end-to-end path using **earthaccess**,
