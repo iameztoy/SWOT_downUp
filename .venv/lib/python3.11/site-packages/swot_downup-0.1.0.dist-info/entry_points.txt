@@ -1,0 +1,2 @@
+[console_scripts]
+swot-pipeline = swot_pipeline.cli:app

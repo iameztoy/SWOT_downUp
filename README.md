@@ -91,6 +91,14 @@ source .venv/bin/activate
 pip install -e .[dev,access,publish]
 ```
 
+If you use `zsh` (including Codex app terminals), quote or escape extras to avoid glob expansion:
+
+```bash
+pip install -e '.[dev,access,publish]'
+# or
+pip install -e .\[dev,access,publish\]
+```
+
 ## Backend Start
 
 ```bash
