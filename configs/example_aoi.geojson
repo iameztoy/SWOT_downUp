@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {"name": "example_aoi"},
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[0.50, 40.45], [1.05, 40.45], [1.05, 40.90], [0.50, 40.90], [0.50, 40.45]]]
+      }
+    }
+  ]
+}

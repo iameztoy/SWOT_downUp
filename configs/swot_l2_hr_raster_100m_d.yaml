@@ -1,0 +1,154 @@
+run_label: "swot_ui_or_cli_run"
+
+date_range:
+  start: "2024-06-01T00:00:00Z"
+  end: "2024-06-03T00:00:00Z"
+
+aoi:
+  # method: bbox | wkt | geojson | map_rectangle | map_polygon | preset | shapefile_zip | saved
+  method: "bbox"
+  bbox: [0.50, 40.45, 1.05, 40.90]
+  polygon_wkt: null
+  geojson: null
+  preset_id: null
+  saved_aoi_id: null
+  # For shapefile_zip method use polygon_path with .zip
+  polygon_path: null
+
+data_access:
+  # User-selectable modes in CLI + UI
+  # earthaccess | podaac | harmony | swodlr
+  mode: "earthaccess"
+  short_name: "SWOT_L2_HR_Raster_100m_D"
+  version: "2.0"
+  provider: "POCLOUD"
+  output_dir: "data/raw"
+  page_size: 200
+  max_results: 20
+  podaac_downloader_cmd: "podaac-data-downloader"
+  podaac_subscriber_cmd: "podaac-data-subscriber"
+
+  downloader_options:
+    use_downloader_cli: false
+    use_subscriber: false
+    swodlr_cmd_template: null
+    output_format: "GeoTIFF"
+    reprojection: "EPSG:4326"
+    subset: null
+
+process:
+  output_dir: "data/processed"
+  # raw_only | extract | qa | full
+  workflow_step: "full"
+  # ee_ready writes EPSG:4326; native_utm keeps native x/y when available.
+  output_mode: "ee_ready"
+  write_cog: true
+  include_qa_masks: true
+  write_filtered_band: false
+  nodata: -9999
+
+  # Initial target variables requested.
+  variables:
+    - wse
+    - wse_qual
+    - wse_uncert
+    - water_frac
+    - n_wse_pix
+
+  optional_variables:
+    - water_area
+    - water_area_qual
+    - water_area_uncert
+    - sig0
+    - sig0_qual
+    - sig0_uncert
+    - cross_track
+    - inc
+    - illumination_time
+    - bitwise_qa
+
+  quality_rules:
+    basic_max_wse_qual: 1
+    basic_min_water_frac: 0.05
+    basic_min_n_wse_pix: 1
+    strict_max_wse_qual: 0
+    strict_min_water_frac: 0.20
+    strict_min_n_wse_pix: 4
+    strict_max_wse_uncert: 0.50
+    # Optional: qa_keep_basic | qa_keep_strict | null
+    apply_mask: "qa_keep_basic"
+
+publish:
+  enabled: false
+  publish_immediately: true
+  project_id: "your-gcp-project"
+  gcs_bucket: "your-staging-bucket"
+  gcs_prefix: "swot/karin_100m_d"
+
+  # Set at least one root. Asset ids are auto-generated as:
+  # <root>/<product>/<YYYY>/<MM>/<DD>/<granule_slug>
+  ee_asset_root: "users/your_user/swot_assets"
+  ee_collection_root: "users/your_user/swot_collection"
+
+  # ingested | external_image
+  ee_mode: "ingested"
+  task_poll_interval_s: 20
+  task_timeout_s: 1800
+  write_asset_properties: true
+
+auth:
+  # Earthdata can come from env vars or .netrc. Leave null to use env/.netrc.
+  use_env: true
+  earthdata_username: null
+  earthdata_password: null
+  netrc_path: null
+
+  # Optional service-account based auth.
+  gcp_credentials_path: null
+  ee_service_account: null
+  ee_private_key_path: null
+
+product:
+  plugin: "swot_l2_hr_raster_100m_d"
+  short_name: "SWOT_L2_HR_Raster_100m_D"
+  version: "2.0"
+
+  # Override here if upstream variable names differ.
+  variable_map:
+    wse: "wse"
+    wse_qual: "wse_qual"
+    wse_uncert: "wse_uncert"
+    water_frac: "water_frac"
+    n_wse_pix: "n_wse_pix"
+    water_area: "water_area"
+    water_area_qual: "water_area_qual"
+    water_area_uncert: "water_area_uncert"
+    sig0: "sig0"
+    sig0_qual: "sig0_qual"
+    sig0_uncert: "sig0_uncert"
+    cross_track: "cross_track"
+    inc: "inc"
+    illumination_time: "illumination_time"
+    bitwise_qa: "bitwise_qa"
+
+  preferred_output_bands:
+    - wse
+    - wse_uncert
+    - water_frac
+
+  downloader_compatibility: ["earthaccess", "podaac", "harmony"]
+  ui_defaults:
+    qa_preset: "qa_keep_basic"
+
+  native_epsg: null
+  latitude_var: "latitude"
+  longitude_var: "longitude"
+  x_var: "x"
+  y_var: "y"
+
+chunking:
+  enabled: true
+  mode: "auto"
+  max_tile_area_km2: 300000
+  max_tile_span_deg: 8
+  max_tiles: 400

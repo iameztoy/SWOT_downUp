@@ -1,0 +1,105 @@
+run_label: "smoke_earthaccess_small_aoi"
+
+date_range:
+  # Keep this a short window; adjust if no granules are returned.
+  start: "2024-06-01T00:00:00Z"
+  end: "2024-06-03T00:00:00Z"
+
+aoi:
+  method: "bbox"
+  # Small AOI near the Ebro delta (Spain) for a quick smoke test pattern.
+  bbox: [0.50, 40.45, 1.05, 40.90]
+  polygon_wkt: null
+  geojson: null
+  preset_id: null
+  saved_aoi_id: null
+  polygon_path: null
+
+data_access:
+  mode: "earthaccess"
+  short_name: "SWOT_L2_HR_Raster_100m_D"
+  version: "2.0"
+  provider: "POCLOUD"
+  output_dir: "data/raw/smoke"
+  page_size: 200
+  max_results: 10
+  downloader_options: {}
+
+process:
+  output_dir: "data/processed/smoke"
+  workflow_step: "full"
+  output_mode: "ee_ready"
+  write_cog: true
+  include_qa_masks: true
+  write_filtered_band: true
+  nodata: -9999
+  variables:
+    - wse
+    - wse_qual
+    - wse_uncert
+    - water_frac
+    - n_wse_pix
+  optional_variables: []
+  quality_rules:
+    basic_max_wse_qual: 1
+    basic_min_water_frac: 0.05
+    basic_min_n_wse_pix: 1
+    strict_max_wse_qual: 0
+    strict_min_water_frac: 0.20
+    strict_min_n_wse_pix: 4
+    strict_max_wse_uncert: 0.50
+    apply_mask: "qa_keep_basic"
+
+publish:
+  enabled: false
+  publish_immediately: false
+  project_id: null
+  gcs_bucket: null
+  gcs_prefix: "swot/smoke"
+  ee_asset_root: null
+  ee_collection_root: null
+  ee_mode: "ingested"
+  task_poll_interval_s: 20
+  task_timeout_s: 1800
+  write_asset_properties: true
+
+auth:
+  use_env: true
+  earthdata_username: null
+  earthdata_password: null
+  netrc_path: null
+  gcp_credentials_path: null
+  ee_service_account: null
+  ee_private_key_path: null
+
+product:
+  plugin: "swot_l2_hr_raster_100m_d"
+  short_name: "SWOT_L2_HR_Raster_100m_D"
+  version: "2.0"
+  variable_map:
+    wse: "wse"
+    wse_qual: "wse_qual"
+    wse_uncert: "wse_uncert"
+    water_frac: "water_frac"
+    n_wse_pix: "n_wse_pix"
+  preferred_output_bands:
+    - wse
+    - wse_qual
+    - wse_uncert
+    - water_frac
+    - n_wse_pix
+  downloader_compatibility: ["earthaccess", "podaac", "harmony"]
+  ui_defaults:
+    qa_preset: "qa_keep_basic"
+  native_epsg: null
+  latitude_var: "latitude"
+  longitude_var: "longitude"
+  x_var: "x"
+  y_var: "y"
+
+chunking:
+  enabled: true
+  mode: "auto"
+  max_tile_area_km2: 300000
+  max_tile_span_deg: 8
+  max_tiles: 400
